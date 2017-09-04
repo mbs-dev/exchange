@@ -27,7 +27,7 @@ function getOrderBook(market) {
     const tickerInfo = marketToSupported(market)
 
     if (tickerInfo === undefined) {
-      reject(new Error('Market is not available.'))
+      reject(new Error('Invalid market.'))
       return
     }
 
@@ -56,8 +56,10 @@ function getOrderBook(market) {
         return Number(order[2]) > 0
       })
 
+      if (buyOrders.length == 0 || sellOrders.length == 0) reject('No data received.')
+
       resolve({
-        'BUY':  lo.map(buyOrders, (order) => {
+        'BUY': lo.map(buyOrders, (order) => {
           return {
             'RATE':     Number(order[0]),
             'QUANTITY': Number(order[1])

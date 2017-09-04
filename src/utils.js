@@ -42,3 +42,8 @@ exports.stupidOrderBookFormat = (buyOrders, sellOrders) => {
     _lo.each(orders, (order) => { console.log(formatFloatNumber(order['QUANTITY']) + ' | ' + formatFloatNumber(order['RATE'])) })
   })
 }
+
+
+exports.Eventually = (operation, period) => {
+  return setInterval(operation, period)
+}

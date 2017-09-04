@@ -25,6 +25,8 @@ function getOrderBook(market) {
         })
       })
 
+      if (buySellOrders[0].length == 0 || buySellOrders[1].length == 0) reject('Invalid market.')
+
       resolve({
         'BUY':  buySellOrders[0],
         'SELL': buySellOrders[1]

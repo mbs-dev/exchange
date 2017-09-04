@@ -14,7 +14,7 @@ function getOrderBook(market) {
       }
       const responseObj = JSON.parse(response.toJSON().body)
       if (!responseObj.success) {
-        reject(responseObj)
+        reject(responseObj.message)
         return
       }
 
@@ -26,6 +26,8 @@ function getOrderBook(market) {
           }
         })
       })
+
+      if (buySellOrders[0].length == 0 || buySellOrders[1].length == 0) reject('Invalid market.')
 
       resolve({
         'BUY':  buySellOrders[0],

@@ -2,8 +2,8 @@ const lo = require('lodash')
 const utils = require('./src/utils')
 
 const exchanges = {
-  // 'Bittrex': require('./src/exchanges/bittrex').getOrderBook,
-  // 'Poloniex': require('./src/exchanges/poloniex').getOrderBook,
+  'Bittrex': require('./src/exchanges/bittrex').getOrderBook,
+  'Poloniex': require('./src/exchanges/poloniex').getOrderBook,
   'Bitfinex': require('./src/exchanges/bitfinex').getOrderBook
 }
 
@@ -20,6 +20,6 @@ Promise.all(lo.values(lo.each(exchanges, (getOrderBook, exchangeName) => {
     console.log('-- ' + exchangeName + ' --')
     _utils.stupidOrderBookFormat(ordersDict['BUY'], ordersDict['SELL'])
   }).catch((reason)=>{
-    console.error(reason);
+    console.error('[' + exchangeName + '] Unable to retrieve data: ' + reason);
   })
 })))
