@@ -1,15 +1,27 @@
 {
   "name": "change",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "version": "0.0.0",
+  "private": true,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "webpack": "webpack --watch --config webpack.browser.config.js",
+    "start": "DEBUG=change:* node ./bin/www"
   },
-  "author": "",
-  "license": "ISC",
   "dependencies": {
+    "body-parser": "^1.17.2",
+    "cookie-parser": "^1.4.3",
+    "d3": "^4.10.2",
+    "debug": "~2.6.3",
+    "express": "~4.15.2",
+    "jquery": "^3.2.1",
+    "knex": "^0.13.0",
     "lodash": "^4.17.4",
-    "request": "^2.81.0"
+    "morgan": "^1.8.2",
+    "pg": "^7.3.0",
+    "pug": "^2.0.0-rc.3",
+    "request": "^2.81.0",
+    "serve-favicon": "^2.4.3",
+    "socket.io": "^2.0.3",
+    "sqlite3": "^3.1.11",
+    "webpack": "^3.5.5"
   }
 }
