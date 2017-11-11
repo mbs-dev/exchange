@@ -194,12 +194,9 @@ Promise.all(_.map(markets, (market) => { return getOrderBook(market.name) }))
           break
         }
 
-        console.log(`I have ${fundsIhaveForSpend} ${whatISpend}`);
-
         // if I should spend more than I have,
         if (diff[whatISpend].negated().greaterThan(fundsIhaveForSpend)) {
           // I adjust required volume to desirable
-          console.log('I have less than required');
           requiredVolume = Decimal.mul(requiredVolume, fundsIhaveForSpend.absoluteValue().dividedBy(diff[whatISpend].absoluteValue()))
           // and update balance again
           diff = market.buyOrSell(direction, availablePrice, requiredVolume)
@@ -221,52 +218,3 @@ Promise.all(_.map(markets, (market) => { return getOrderBook(market.name) }))
     }
 
   }).catch((err) => {console.log(err);})
-
-
-
-
-
-
-// exchange.getOrderBook
-
-// //
-// bittrex.options(bittrexConfig);
-// //
-//
-// new Promise(function(resolve, reject) {
-//   bittrex.getorderbook({ market : 'USDT-BTC', type : 'both' }, function( data, err ) {
-//     let ascendingOrder = (x, y) => { return (Decimal(x.Rate).sub(Decimal(y.Rate))).toNumber() }
-//     let descendingOrder = (x, y) => { return (Decimal(y.Rate).sub(Decimal(x.Rate))).toNumber() }
-//
-//     let buyOrders = data.result.buy.sort(descendingOrder)
-//     let sellOrders = data.result.sell.sort(ascendingOrder)
-//
-//   });
-//
-// });
-//
-//
-//
-// // bittrex.tradesell({
-// //   MarketName: 'BTC-ZEC',
-// //   OrderType: 'LIMIT',
-// //   Quantity: 1.00000000,
-// //   Rate: 0.04423432,
-// //   TimeInEffect: 'IMMEDIATE_OR_CANCEL', // supported options are 'IMMEDIATE_OR_CANCEL', 'GOOD_TIL_CANCELLED', 'FILL_OR_KILL'
-// //   ConditionType: 'NONE', // supported options are 'NONE', 'GREATER_THAN', 'LESS_THAN'
-// //   Target: 0, // used in conjunction with ConditionType
-// // }, function( data, err ) {
-// //   console.log( data );
-// // });
-// //
-// // bittrex.tradebuy({
-// //   MarketName: 'BTC-ZEC',
-// //   OrderType: 'LIMIT',
-// //   Quantity: 1.00000000,
-// //   Rate: 0.04423432,
-// //   TimeInEffect: 'IMMEDIATE_OR_CANCEL', // supported options are 'IMMEDIATE_OR_CANCEL', 'GOOD_TIL_CANCELLED', 'FILL_OR_KILL'
-// //   ConditionType: 'NONE', // supported options are 'NONE', 'GREATER_THAN', 'LESS_THAN'
-// //   Target: 0, // used in conjunction with ConditionType
-// // }, function( data, err ) {
-// //   console.log( data );
-// // });
