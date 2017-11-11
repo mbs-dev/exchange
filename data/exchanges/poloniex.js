@@ -2,6 +2,8 @@
 
 const request = require('request')
 const lo = require('lodash')
+const Decimal = require('decimal.js')
+
 
 function getOrderBook(market) {
   const url = 'https://poloniex.com/public?command=returnOrderBook&currencyPair=' + market.first + '_' + market.second
@@ -19,8 +21,8 @@ function getOrderBook(market) {
       const buySellOrders = mylo.map([responseObj.asks, responseObj.bids], (orders) => {
         return mylo.map(orders, (order) => {
           return {
-            'RATE':     Number(order[0]),
-            'QUANTITY': Number(order[1])
+            'RATE':     Decimal(order[0]),
+            'QUANTITY': Decimal(order[1])
           }
         })
       })

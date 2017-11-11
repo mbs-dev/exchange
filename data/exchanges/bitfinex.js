@@ -3,7 +3,7 @@
 
 const request = require('request')
 const lo = require('lodash')
-
+const Decimal = require('decimal.js')
 
 const supportedTickers = ["btcusd","ltcusd","ltcbtc","ethusd","ethbtc","etcbtc","etcusd","rrtusd","rrtbtc","zecusd","zecbtc","xmrusd","xmrbtc","dshusd","dshbtc","bccbtc","bcubtc","bccusd","bcuusd","xrpusd","xrpbtc","iotusd","iotbtc","ioteth","eosusd","eosbtc","eoseth","sanusd","sanbtc","saneth","omgusd","omgbtc","omgeth","bchusd","bchbtc","bcheth"]
 
@@ -61,14 +61,14 @@ function getOrderBook(market) {
       resolve({
         'BUY': lo.map(buyOrders, (order) => {
           return {
-            'RATE':     Number(order[0]),
-            'QUANTITY': Number(order[1])
+            'RATE':     Decimal(order[0]),
+            'QUANTITY': Decimal(order[1])
           }
         }),
         'SELL': lo.map(sellOrders, (order) => {
           return {
-            'RATE':     Number(order[0]),
-            'QUANTITY': Number(order[1])
+            'RATE':     Decimal(order[0]),
+            'QUANTITY': Decimal(order[1])
           }
         })
       })

@@ -1,15 +1,28 @@
+const fs = require('fs')
 const lo = require('lodash')
 
-exports.consts = {
-  buy: 'BUY',
-  sell: 'SELL',
-  volume: 'QUANTITY',
-  price: 'RATE'
+let consts = {
+  BUY: 'BUY',
+  SELL: 'SELL',
+  VOLUME: 'QUANTITY',
+  PRICE: 'RATE',
+  BID: 'BID',
+  ASK: 'ASK',
+
+  order: {
+    LIMIT: 'LIMIT',
+    IMMEDIATE_OR_CANCEL: 'IMMEDIATE_OR_CANCEL',
+    GOOD_TIL_CANCELLED: 'GOOD_TIL_CANCELLED',
+    FILL_OR_KILL: 'FILL_OR_KILL',
+    NONE: 'NONE',
+    GREATER_THAN: 'GREATER_THAN',
+    LESS_THAN: 'LESS_THAN'
+  }
 }
 
-exports.parseMarketFromCli = () => {
+let parseMarketFromCli = (marketString) => {
   try {
-    const pair = process.argv[2]
+    const pair = marketString || process.argv[2]
     const chunks = pair.split('-')
 
     return {
@@ -21,16 +34,13 @@ exports.parseMarketFromCli = () => {
   }
 }
 
-const formatFloatNumber = (number) => {
+let formatFloatNumber = (number) => {
   return number.toLocaleString('en-US', {
     minimumFractionDigits: 8
   });
 }
 
-exports.formatFloatNumber = formatFloatNumber
-
-
-exports.stupidOrderBookFormat = (buyOrders, sellOrders) => {
+let stupidOrderBookFormat = (buyOrders, sellOrders) => {
   const _lo = lo
   lo.map([buyOrders, sellOrders], (orders, index) => {
     if (index) console.log('\n============ SELL ORDERS ============\n         Quantity |          Price')
@@ -41,6 +51,29 @@ exports.stupidOrderBookFormat = (buyOrders, sellOrders) => {
 }
 
 
-exports.Eventually = (operation, period) => {
+let Eventually = (operation, period) => {
   return setInterval(operation, period)
+}
+
+let JSONUtils = {
+  saveToFile: (filename, json) => {
+    let fd = fs.openSync(filename, 'w')
+    fs.writeFileSync(fd, JSON.stringify(json))
+    fs.closeSync(fd)
+  },
+  readFromFile: (filename, json) => {
+    let fd = fs.openSync(filename, 'r')
+    let s = fs.readFileSync(fd, 'utf8')
+    fs.closeSync(fd)
+    return JSON.parse(s)
+  }
+}
+
+module.exports = {
+  'JSON': JSONUtils,
+  'Eventually': Eventually,
+  'stupidOrderBookFormat': stupidOrderBookFormat,
+  'formatFloatNumber': formatFloatNumber,
+  'parseMarketFromCli': parseMarketFromCli,
+  'const': consts
 }

@@ -4,18 +4,29 @@
   "private": true,
   "scripts": {
     "webpack": "webpack --watch --config webpack.browser.config.js",
-    "start": "DEBUG=change:* node ./bin/www"
+    "start": "DEBUG=change:* node ./bin/www",
+    "test": "jest",
+    "watch": "jest --coverage --watchAll",
+    "coverage": "jest --coverage",
+    "doc": "jsdoc ./data/arbitrage/"
   },
   "dependencies": {
     "body-parser": "^1.17.2",
+    "cli-table": "^0.3.1",
+    "colors": "^1.1.2",
+    "config": "^1.27.0",
     "cookie-parser": "^1.4.3",
     "d3": "^4.10.2",
     "debug": "~2.6.3",
+    "decimal.js": "^7.3.0",
     "express": "~4.15.2",
     "jquery": "^3.2.1",
+    "js-combinatorics": "^0.5.2",
     "knex": "^0.13.0",
     "lodash": "^4.17.4",
     "morgan": "^1.8.2",
+    "node-bittrex-api": "^0.7.6",
+    "node.bittrex.api": "^1.0.0",
     "pg": "^7.3.0",
     "pug": "^2.0.0-rc.3",
     "request": "^2.81.0",
@@ -23,5 +34,11 @@
     "socket.io": "^2.0.3",
     "sqlite3": "^3.1.11",
     "webpack": "^3.5.5"
+  },
+  "devDependencies": {
+    "chai": "^4.1.2",
+    "jest": "^21.2.1",
+    "jsdoc": "^3.5.5",
+    "mocha": "^4.0.1"
   }
 }
