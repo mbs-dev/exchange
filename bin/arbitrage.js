@@ -16,23 +16,23 @@ let ar = require('../data/arbitrage/index')
 
 let BittrexFee = (depositAmount) => { return Decimal.mul(depositAmount, 0.025) }
 
-// let markets = [
-  // new ar.MarketWithFees('USDT', 'BTC', 'USDT-BTC', BittrexFee),
-  // new ar.MarketWithFees('USDT', 'ETH', 'USDT-ETH', BittrexFee),
-  // new ar.MarketWithFees( 'BTC', 'ETH', 'BTC-ETH',  BittrexFee)
-// ]
-
-
 let markets = [
-  new ar.MarketWithFees('BTC', '1ST', 'BTC-1ST', BittrexFee),
-  new ar.MarketWithFees('ETH', '1ST', 'ETH-1ST', BittrexFee),
+  new ar.MarketWithFees('USDT', 'BTC', 'USDT-BTC', BittrexFee),
+  new ar.MarketWithFees('USDT', 'ETH', 'USDT-ETH', BittrexFee),
   new ar.MarketWithFees( 'BTC', 'ETH', 'BTC-ETH',  BittrexFee)
 ]
 
 
+// let markets = [
+//   new ar.MarketWithFees('BTC', '1ST', 'BTC-1ST', BittrexFee),
+//   new ar.MarketWithFees('ETH', '1ST', 'ETH-1ST', BittrexFee),
+//   new ar.MarketWithFees( 'BTC', 'ETH', 'BTC-ETH',  BittrexFee)
+// ]
+
+
 let goal = 'BTC'
 let myCurrentAccount = new ar.MulticurrencyAccount()
-myCurrentAccount.updateBalance({'BTC': Decimal(1.0)})  // now we have 1.0 BTC in our account
+myCurrentAccount.updateBalance({'BTC': Decimal(0.001)})  // now we have 1.0 BTC in our account
 
 
 let whatCurrencyISpend = (diff) => {
@@ -140,6 +140,10 @@ let directionToOrder = (d) => {
   throw new Error('Direction of the deal should be either BUY or SELL and will respond with corresponding side of OrderBook')
 }
 
+
+var CSVOutput = []  // row that will contain next record in CSV
+
+
 /////////////////////////////////////////////////////////////////////////////////////////
 debug('Bittrex')('Obtaining orderbooks')
 Promise.all(_.map(markets, (market) => { return getOrderBook(market.name) }))
@@ -169,6 +173,9 @@ Promise.all(_.map(markets, (market) => { return getOrderBook(market.name) }))
    })
   .then((orderBooks) => {
     console.log('\n\n  Table 3. Calculating orders for every arbitrage')
+
+    var correctArbitrages = []
+    // {idx:, profit:,}
 
     for (var i = 0; i < marketsVsOrdersDirections.length; i++ ) { // for every arbitrage
       var arbitrage = marketsVsOrdersDirections[i]
@@ -222,11 +229,12 @@ Promise.all(_.map(markets, (market) => { return getOrderBook(market.name) }))
       }
 
       // check if we get only `goal` currency during the arbitrage
-
-      //todo:
+      // todo:
 
 
       if (!correctArbitrage) continue
+
+      correctArbitrages.push({idx: i + 1, profit: (arbitrageAccount.getBalance()['BTC'].sub(myCurrentAccount.getBalance()['BTC'])).toFixed(8).toString() })
 
       // Now let's describe arbitrage
       console.log(` -- Arbitrage #${i+1} calculation`);
@@ -234,4 +242,17 @@ Promise.all(_.map(markets, (market) => { return getOrderBook(market.name) }))
       // console.log(deals);
     }
 
-  }).catch((err) => {console.log(err);})
+    return correctArbitrages
+
+  })
+  .then((correctArbitrages) => {
+    // var maxProfit = undefined
+    // for(var i =0; i < correctArbitrages; i++) {
+    //   let arbProfit = Decimal(correctArbitrages[i].profit)
+    //   if (maxProfit === undefined) {
+    //     maxProfit = arbProfit
+    //   } else if (arbProfit.)
+    // }
+    // console.log(correctArbitrages);
+  })
+  .catch((err) => {console.log(err);})
