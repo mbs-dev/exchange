@@ -16,15 +16,23 @@ let ar = require('../data/arbitrage/index')
 
 let BittrexFee = (depositAmount) => { return Decimal(depositAmount).mul(0.025) }
 
+// let markets = [
+//   new ar.MarketWithFees('USDT', 'BTC', 'USDT-BTC', BittrexFee),
+//   new ar.MarketWithFees('USDT', 'ETH', 'USDT-ETH', BittrexFee),
+//   new ar.MarketWithFees( 'BTC', 'ETH', 'BTC-ETH',  BittrexFee)
+// ]
+
+
 let markets = [
-  new ar.MarketWithFees('USDT', 'BTC', 'USDT-BTC', BittrexFee),
-  new ar.MarketWithFees('USDT', 'ETH', 'USDT-ETH', BittrexFee),
+  new ar.MarketWithFees('BTC', '1ST', 'BTC-1ST', BittrexFee),
+  new ar.MarketWithFees('ETH', '1ST', 'ETH-1ST', BittrexFee),
   new ar.MarketWithFees( 'BTC', 'ETH', 'BTC-ETH',  BittrexFee)
 ]
 
+
 let goal = 'BTC'
 let myCurrentAccount = new ar.MulticurrencyAccount()
-myCurrentAccount.updateBalance({'BTC': Decimal(0.0001)})  // now we have 0.0001 BTC in our account
+myCurrentAccount.updateBalance({'BTC': Decimal(1.0)})  // now we have 1.0 BTC in our account
 
 
 let whatCurrencyISpend = (diff) => {
