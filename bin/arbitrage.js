@@ -14,12 +14,12 @@ let utils = require('../data/utils')
 let getOrderBook = require('../data/exchanges/bittrex').getOrderBook
 let ar = require('../data/arbitrage/index')
 
-let BittrexFee = (depositAmount) => { return Decimal(depositAmount).mul(0.025) }
+let BittrexFee = (depositAmount) => { return Decimal.mul(depositAmount, 0.025) }
 
 // let markets = [
-//   new ar.MarketWithFees('USDT', 'BTC', 'USDT-BTC', BittrexFee),
-//   new ar.MarketWithFees('USDT', 'ETH', 'USDT-ETH', BittrexFee),
-//   new ar.MarketWithFees( 'BTC', 'ETH', 'BTC-ETH',  BittrexFee)
+  // new ar.MarketWithFees('USDT', 'BTC', 'USDT-BTC', BittrexFee),
+  // new ar.MarketWithFees('USDT', 'ETH', 'USDT-ETH', BittrexFee),
+  // new ar.MarketWithFees( 'BTC', 'ETH', 'BTC-ETH',  BittrexFee)
 // ]
 
 
@@ -69,7 +69,7 @@ function beautyBalanceOutputOfAccount(account) {
     for (var currency in transaction) {
       var i = 1 + currencies.indexOf(currency) * 2
       if (transaction[currency].isNegative()) i = i + 1
-      row[i] = transaction[currency].toFixed(6).toString().grey
+      row[i] = transaction[currency].toFixed(8).toString().grey
     }
     row[0] = `${index+1}`
     table.push(row)
@@ -80,9 +80,9 @@ function beautyBalanceOutputOfAccount(account) {
     var i = 1 + currencies.indexOf(currency) * 2
     if (balance[currency].isNegative()) {
       i = i + 1
-      row[i] = balance[currency].toFixed(6).toString().red
+      row[i] = balance[currency].toFixed(8).toString().red
     } else {
-      row[i] = balance[currency].toFixed(6).toString().green
+      row[i] = balance[currency].toFixed(8).toString().green
     }
   }
   row[0] = 'Total'.bold.white
@@ -153,10 +153,10 @@ Promise.all(_.map(markets, (market) => { return getOrderBook(market.name) }))
 
     for (var i = 0; i < orderBooks.length; i++) {
       var marketName = markets[i].name
-      var bidPrice = orderBooks[i][utils.const.BID][TOP][utils.const.PRICE].toString()
-      var bidVolume = orderBooks[i][utils.const.BID][TOP][utils.const.VOLUME].toString()
-      var askPrice = orderBooks[i][utils.const.ASK][TOP][utils.const.PRICE].toString()
-      var askVolume = orderBooks[i][utils.const.ASK][TOP][utils.const.VOLUME].toString()
+      var bidPrice = orderBooks[i][utils.const.BID][TOP][utils.const.PRICE].toFixed(8).toString()
+      var bidVolume = orderBooks[i][utils.const.BID][TOP][utils.const.VOLUME].toFixed(8).toString()
+      var askPrice = orderBooks[i][utils.const.ASK][TOP][utils.const.PRICE].toFixed(8).toString()
+      var askVolume = orderBooks[i][utils.const.ASK][TOP][utils.const.VOLUME].toFixed(8).toString()
 
       // debug('Bittrex')(`${marketName} BID PRICE [${bidPrice}] VOL [${bidVolume}] ASK PRICE [${askPrice}] VOL [${askVolume}]`)
       beautyTable2.push([marketName, bidVolume.green, bidPrice.green, askPrice.red, askVolume.red])
@@ -210,7 +210,10 @@ Promise.all(_.map(markets, (market) => { return getOrderBook(market.name) }))
           diff = market.buyOrSell(direction, availablePrice, requiredVolume)
         }
 
-        if (requiredVolume.lessThan(Decimal(0.0000001))) break
+        if (requiredVolume.lessThan(Decimal(0.0000001))) {
+          correctArbitrage = false
+          break
+        }
 
         // then I store the new deal into `deals` buffer of this arbitrage
         deals.push([direction, requiredVolume, availablePrice, diff])
@@ -218,11 +221,17 @@ Promise.all(_.map(markets, (market) => { return getOrderBook(market.name) }))
         arbitrageAccount.updateBalance(diff)
       }
 
+      // check if we get only `goal` currency during the arbitrage
+
+      //todo:
+
+
       if (!correctArbitrage) continue
+
       // Now let's describe arbitrage
       console.log(` -- Arbitrage #${i+1} calculation`);
       console.log(beautyBalanceOutputOfAccount(arbitrageAccount).toString());
-      console.log(deals);
+      // console.log(deals);
     }
 
   }).catch((err) => {console.log(err);})
