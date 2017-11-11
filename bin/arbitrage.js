@@ -14,6 +14,8 @@ let utils = require('../data/utils')
 let getOrderBook = require('../data/exchanges/bittrex').getOrderBook
 let ar = require('../data/arbitrage/index')
 
+let fs = require('fs')
+
 let BittrexFee = (depositAmount) => { return Decimal.mul(depositAmount, 0.025) }
 
 let markets = [
@@ -21,6 +23,8 @@ let markets = [
   new ar.MarketWithFees('USDT', 'ETH', 'USDT-ETH', BittrexFee),
   new ar.MarketWithFees( 'BTC', 'ETH', 'BTC-ETH',  BittrexFee)
 ]
+
+let outputFile = 'output.csv'
 
 
 // let markets = [
@@ -162,9 +166,17 @@ Promise.all(_.map(markets, (market) => { return getOrderBook(market.name) }))
       var askPrice = orderBooks[i][utils.const.ASK][TOP][utils.const.PRICE].toFixed(8).toString()
       var askVolume = orderBooks[i][utils.const.ASK][TOP][utils.const.VOLUME].toFixed(8).toString()
 
+      CSVOutput[i*4] = bidPrice
+      CSVOutput[i*4 + 1] = bidVolume
+      CSVOutput[i*4 + 2] = askPrice
+      CSVOutput[i*4 + 3] = askVolume
+
+
       // debug('Bittrex')(`${marketName} BID PRICE [${bidPrice}] VOL [${bidVolume}] ASK PRICE [${askPrice}] VOL [${askVolume}]`)
       beautyTable2.push([marketName, bidVolume.green, bidPrice.green, askPrice.red, askVolume.red])
     }
+
+
 
 
     console.log(beautyTable2.toString())
@@ -239,20 +251,29 @@ Promise.all(_.map(markets, (market) => { return getOrderBook(market.name) }))
       // Now let's describe arbitrage
       console.log(` -- Arbitrage #${i+1} calculation`);
       console.log(beautyBalanceOutputOfAccount(arbitrageAccount).toString());
-      // console.log(deals);
     }
 
     return correctArbitrages
 
   })
   .then((correctArbitrages) => {
-    // var maxProfit = undefined
-    // for(var i =0; i < correctArbitrages; i++) {
-    //   let arbProfit = Decimal(correctArbitrages[i].profit)
-    //   if (maxProfit === undefined) {
-    //     maxProfit = arbProfit
-    //   } else if (arbProfit.)
-    // }
-    // console.log(correctArbitrages);
+    var maxProfit = undefined
+    var maxProfitIdx = undefined
+    for(var i =0; i < correctArbitrages.length; i++) {
+      let arbProfit = Decimal(correctArbitrages[i].profit)
+      if (maxProfit === undefined) {
+        maxProfit = arbProfit
+        maxProfitIdx = correctArbitrages[i].idx
+      } else if (arbProfit.greaterThan(maxProfit)) {
+        maxProfit = arbProfit
+        maxProfitIdx = correctArbitrages[i].idx
+      }
+    }
+
+    CSVOutput[(markets.length-1) * 4 + 3] = maxProfit.toFixed(8).toString()
+    CSVOutput[(markets.length-1) * 4 + 4] = maxProfitIdx
+
+    fs.writeFileSync(outputFile, CSVOutput.join(';') + '\n', {flag: 'a'})
+
   })
   .catch((err) => {console.log(err);})
