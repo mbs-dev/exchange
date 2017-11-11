@@ -18,13 +18,25 @@ let fs = require('fs')
 
 let BittrexFee = (depositAmount) => { return Decimal.mul(depositAmount, 0.025) }
 
-let markets = [
-  new ar.MarketWithFees('USDT', 'BTC', 'USDT-BTC', BittrexFee),
-  new ar.MarketWithFees('USDT', 'ETH', 'USDT-ETH', BittrexFee),
-  new ar.MarketWithFees( 'BTC', 'ETH', 'BTC-ETH',  BittrexFee)
-]
+// let markets = [
+  // new ar.MarketWithFees('USDT', 'BTC', 'USDT-BTC', BittrexFee),
+  // new ar.MarketWithFees('USDT', 'ETH', 'USDT-ETH', BittrexFee),
+  // new ar.MarketWithFees( 'BTC', 'ETH', 'BTC-ETH',  BittrexFee)
+// ]
 
-let outputFile = 'output.csv'
+// let outputFile = 'output.csv'
+
+function makeMarketsFromCliArgs() {
+  let i = 2 // start index in process.argv
+  return [
+    new ar.MarketWithFees(process.argv[i  ], process.argv[i+1], process.argv[i+2], BittrexFee),
+    new ar.MarketWithFees(process.argv[i+3], process.argv[i+4], process.argv[i+5], BittrexFee),
+    new ar.MarketWithFees(process.argv[i+6], process.argv[i+7], process.argv[i+8],  BittrexFee)
+  ]
+}
+
+let markets = makeMarketsFromCliArgs()
+let outputFile = process.argv[11]
 
 
 // let markets = [
@@ -152,7 +164,7 @@ var CSVOutput = []  // row that will contain next record in CSV
 debug('Bittrex')('Obtaining orderbooks')
 Promise.all(_.map(markets, (market) => { return getOrderBook(market.name) }))
   .then((orderBooks) => {
-
+    debug('Bittrex')('Orderbooks loaded')
     console.log('\n\n  Table 2. Market state')
     let beautyTable2 = new Table({
       head: ['Market'.gray.bold, 'Bid vol.'.gray.bold, 'Bid (buyers) price'.gray.bold, 'Ask (sellers) price'.gray.bold, 'Ask vol.'.gray.bold]
@@ -180,6 +192,8 @@ Promise.all(_.map(markets, (market) => { return getOrderBook(market.name) }))
 
 
     console.log(beautyTable2.toString())
+
+    debug('arbitrage')('Market stat rendered')
 
     return orderBooks
    })
@@ -248,11 +262,14 @@ Promise.all(_.map(markets, (market) => { return getOrderBook(market.name) }))
 
       correctArbitrages.push({idx: i + 1, profit: (arbitrageAccount.getBalance()['BTC'].sub(myCurrentAccount.getBalance()['BTC'])).toFixed(8).toString() })
 
+
       // Now let's describe arbitrage
       console.log(` -- Arbitrage #${i+1} calculation`);
       console.log(beautyBalanceOutputOfAccount(arbitrageAccount).toString());
+
     }
 
+    debug('arbitrage')('Arbitrages calculated')
     return correctArbitrages
 
   })
@@ -269,11 +286,13 @@ Promise.all(_.map(markets, (market) => { return getOrderBook(market.name) }))
         maxProfitIdx = correctArbitrages[i].idx
       }
     }
+    debug('arbitrage')('Most profitable arbitrage found')
 
     CSVOutput[(markets.length-1) * 4 + 3] = maxProfit.toFixed(8).toString()
     CSVOutput[(markets.length-1) * 4 + 4] = maxProfitIdx
 
     fs.writeFileSync(outputFile, CSVOutput.join(';') + '\n', {flag: 'a'})
-
+    debug('arbitrage')('Dumped to file')
+    console.log(`Well done. Output at ${outputFile}`);
   })
   .catch((err) => {console.log(err);})
