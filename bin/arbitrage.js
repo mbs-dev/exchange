@@ -16,7 +16,8 @@ let ar = require('../data/arbitrage/index')
 
 let fs = require('fs')
 
-let BittrexFee = (depositAmount) => { return Decimal.mul(depositAmount, 0.025) }
+// Bittrex Fee is 0.25 % , not 2.5% (see https://bittrex.com/Fees)
+let BittrexFee = (depositAmount) => { return Decimal.mul(depositAmount, 0.0025) }
 
 // let markets = [
   // new ar.MarketWithFees('USDT', 'BTC', 'USDT-BTC', BittrexFee),
@@ -294,5 +295,7 @@ Promise.all(_.map(markets, (market) => { return getOrderBook(market.name) }))
     fs.writeFileSync(outputFile, CSVOutput.join(';') + '\n', {flag: 'a'})
     debug('arbitrage')('Dumped to file')
     console.log(`Well done. Output at ${outputFile}`);
+
+    return correctArbitrages
   })
   .catch((err) => {console.log(err);})
