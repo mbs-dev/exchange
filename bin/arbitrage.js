@@ -7,6 +7,7 @@ var Table = require('cli-table');
 let bittrexConfig = require('../secret.config.js')['Bittrex']
 let bittrex = require('node-bittrex-api')
 let Decimal = require('decimal.js')
+
 let _ = require('lodash')
 let combinatorics = require('js-combinatorics')
 let utils = require('../data/utils')
@@ -15,6 +16,64 @@ let getOrderBook = require('../data/exchanges/bittrex').getOrderBook
 let ar = require('../data/arbitrage/index')
 
 let fs = require('fs')
+
+
+function tradeSell(marketName, price, volume) {
+  return new Promise(function(resolve, reject) {
+    bittrex.tradesell({
+      MarketName: marketName,
+      OrderType: 'LIMIT',
+      Quantity: volume.toFixed(8).toString(),
+      Rate: price.toFixed(8).toString(),
+      TimeInEffect: 'IMMEDIATE_OR_CANCEL', // supported options are 'IMMEDIATE_OR_CANCEL', 'GOOD_TIL_CANCELLED', 'FILL_OR_KILL'
+      ConditionType: 'NONE', // supported options are 'NONE', 'GREATER_THAN', 'LESS_THAN'
+      Target: 0, // used in conjunction with ConditionType
+    }, function( data, err ) {
+      if (err) {
+        reject(err.message)
+        return
+      } else {
+        resolve(data)
+      }
+    })
+  })
+}
+
+
+
+
+function tradeBuy(marketName, price, volume) {
+  return new Promise(function(resolve, reject) {
+    bittrex.tradebuy({
+      MarketName: marketName,
+      OrderType: 'LIMIT',
+      Quantity: volume.toFixed(8).toString(),
+      Rate: price.toFixed(8).toString(),
+      TimeInEffect: 'IMMEDIATE_OR_CANCEL', // supported options are 'IMMEDIATE_OR_CANCEL', 'GOOD_TIL_CANCELLED', 'FILL_OR_KILL'
+      ConditionType: 'NONE', // supported options are 'NONE', 'GREATER_THAN', 'LESS_THAN'
+      Target: 0, // used in conjunction with ConditionType
+    }, function( data, err ) {
+      if (err) {
+        reject(err.message)
+        return
+      } else {
+        resolve(data)
+      }
+    })
+  })
+}
+
+
+function tradeBuyOrSell(direction, marketName, price, volume) {
+  if (direction === utils.const.BUY) {
+    return tradeBuy(marketName, price, volume)
+  } else if (direction === utils.const.SELL) {
+    return tradeSell(marketName, price, volume)
+  } else {
+    throw new Error('Incorrect trade direction.')
+  }
+}
+
 
 // Bittrex Fee is 0.25 % , not 2.5% (see https://bittrex.com/Fees)
 let BittrexFee = (depositAmount) => { return Decimal.mul(depositAmount, 0.0025) }
@@ -49,7 +108,7 @@ let outputFile = process.argv[11]
 
 let goal = 'BTC'
 let myCurrentAccount = new ar.MulticurrencyAccount()
-myCurrentAccount.updateBalance({'BTC': Decimal(0.001)})  // now we have 1.0 BTC in our account
+myCurrentAccount.updateBalance({'BTC': Decimal('0.00100000')})
 
 
 let whatCurrencyISpend = (diff) => {
@@ -204,6 +263,8 @@ Promise.all(_.map(markets, (market) => { return getOrderBook(market.name) }))
     var correctArbitrages = []
     // {idx:, profit:,}
 
+    var arbitragesVsOrders = []
+
     for (var i = 0; i < marketsVsOrdersDirections.length; i++ ) { // for every arbitrage
       var arbitrage = marketsVsOrdersDirections[i]
       var arbitrageAccount = myCurrentAccount.copy()
@@ -244,13 +305,13 @@ Promise.all(_.map(markets, (market) => { return getOrderBook(market.name) }))
           diff = market.buyOrSell(direction, availablePrice, requiredVolume)
         }
 
-        if (requiredVolume.lessThan(Decimal(0.0000001))) {
+        if (requiredVolume.lessThan(Decimal('0.00050000'))) {
           correctArbitrage = false
           break
         }
 
         // then I store the new deal into `deals` buffer of this arbitrage
-        deals.push([direction, requiredVolume, availablePrice, diff])
+        deals.push([direction, requiredVolume, availablePrice, diff, market.name])
         // and update arbitrage balance as well
         arbitrageAccount.updateBalance(diff)
       }
@@ -261,7 +322,13 @@ Promise.all(_.map(markets, (market) => { return getOrderBook(market.name) }))
 
       if (!correctArbitrage) continue
 
-      correctArbitrages.push({idx: i + 1, profit: (arbitrageAccount.getBalance()['BTC'].sub(myCurrentAccount.getBalance()['BTC'])).toFixed(8).toString() })
+      let profit = arbitrageAccount.getBalance()['BTC'].sub(myCurrentAccount.getBalance()['BTC'])
+      correctArbitrages.push({idx: i + 1, profit: profit.toFixed(8).toString() })
+
+      arbitragesVsOrders.push({
+        'profit': profit,
+        'deals': deals
+      })
 
 
       // Now let's describe arbitrage
@@ -271,31 +338,55 @@ Promise.all(_.map(markets, (market) => { return getOrderBook(market.name) }))
     }
 
     debug('arbitrage')('Arbitrages calculated')
-    return correctArbitrages
+    return [correctArbitrages, arbitragesVsOrders]
 
   })
-  .then((correctArbitrages) => {
+  .then((arbitragesAndOrders) => {
+    var correctArbitrages = arbitragesAndOrders[0]
+
     var maxProfit = undefined
     var maxProfitIdx = undefined
-    for(var i =0; i < correctArbitrages.length; i++) {
+    var maxProfitI = undefined
+    for(var i = 0; i < correctArbitrages.length; i++) {
       let arbProfit = Decimal(correctArbitrages[i].profit)
       if (maxProfit === undefined) {
         maxProfit = arbProfit
         maxProfitIdx = correctArbitrages[i].idx
+        maxProfitI = i
       } else if (arbProfit.greaterThan(maxProfit)) {
         maxProfit = arbProfit
         maxProfitIdx = correctArbitrages[i].idx
+        maxProfitI = i
       }
     }
+
+
     debug('arbitrage')('Most profitable arbitrage found')
 
-    CSVOutput[(markets.length-1) * 4 + 3] = maxProfit.toFixed(8).toString()
-    CSVOutput[(markets.length-1) * 4 + 4] = maxProfitIdx
+    CSVOutput[(markets.length-1) * 4 + 4] = maxProfit.toFixed(8).toString()
+    CSVOutput[(markets.length-1) * 4 + 5] = maxProfitIdx
 
     fs.writeFileSync(outputFile, CSVOutput.join(';') + '\n', {flag: 'a'})
     debug('arbitrage')('Dumped to file')
     console.log(`Well done. Output at ${outputFile}`);
 
-    return correctArbitrages
+
+    return [maxProfit, arbitragesAndOrders[1][maxProfitI]['deals']]
+  })
+  .then((dataForMakingDecision) => {
+    // var maxProfit = dataForMakingDecision[0]
+    // var dealsVsOrders = dataForMakingDecision[1]
+    // if (maxProfit.greaterThan('0.00000100')) {
+    //   console.log(`FOUND THE GOLD ${maxProfit}`);
+    //
+    //   return tradeBuyOrSell(dealsVsOrders[0][0], dealsVsOrders[0][4], dealsVsOrders[0][2], dealsVsOrders[0][1]).then(() => {
+    //       return tradeBuyOrSell(dealsVsOrders[1][0], dealsVsOrders[1][4], dealsVsOrders[1][2], dealsVsOrders[1][1])
+    //     }).then(() => {
+    //       return tradeBuyOrSell(dealsVsOrders[2][0], dealsVsOrders[2][4], dealsVsOrders[2][2], dealsVsOrders[2][1])
+    //     })
+    //
+    // } else {
+    //   return
+    // }
   })
   .catch((err) => {console.log(err);})
