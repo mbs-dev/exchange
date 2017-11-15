@@ -123,4 +123,54 @@ describe('Arbitrage', () => {
     profit.should.be.an('object')
     profit.toFixed(8).toString().should.equals('-0.00001037')
   })
+
+  it('properly work with incorrect arbitrage', () => {
+    //////////////// Given
+    let orderbookUSDTBTC = {}
+    orderbookUSDTBTC[utils.const.BID] = [{'QUANTITY': Decimal('0.02392795'), 'RATE': Decimal('6580.74972297')},]
+    orderbookUSDTBTC[utils.const.ASK] = [{'QUANTITY': Decimal('0.24747803'), 'RATE': Decimal('6580.74972298')},]
+
+    let orderbookUSDTETH = {}
+    orderbookUSDTETH[utils.const.BID] = [{'QUANTITY': Decimal('0.63784758'), 'RATE': Decimal('320.06864764')},]
+    orderbookUSDTETH[utils.const.ASK] = [{'QUANTITY': Decimal('6.52426731'), 'RATE': Decimal('320.07000000')},]
+
+    let orderbookBTCETH = {}
+    orderbookBTCETH[utils.const.BID] = [{'QUANTITY': Decimal('3.58733748'), 'RATE': Decimal('0.04890000')},]
+    orderbookBTCETH[utils.const.ASK] = [{'QUANTITY': Decimal('3.39358303'), 'RATE': Decimal('0.04899999')},]
+
+    let orderbooks = [orderbookUSDTBTC, orderbookUSDTETH, orderbookBTCETH]
+
+    let acc = new MulticurrencyAccount()
+    acc.updateBalance({'BTC': Decimal(1.0)})
+
+    // Bittrex Fee is 0.25 % , not 2.5% (see https://bittrex.com/Fees)
+    let BittrexFee = (depositAmount) => { return Decimal.mul(depositAmount, 0.0025) }
+
+    let USDTBTCMarket = new MarketWithFees('USDT', 'BTC', 'USDT-BTC', BittrexFee)
+    let USDTETHMarket = new MarketWithFees('USDT', 'ETH', 'USDT-ETH', BittrexFee)
+    let BTCETHMarket = new MarketWithFees( 'BTC', 'ETH', 'BTC-ETH',  BittrexFee)
+
+    let markets = [USDTBTCMarket, USDTETHMarket, BTCETHMarket]
+
+    ////////////////// When
+    let a1 = new Arbitrage(markets, [utils.const.SELL, utils.const.SELL, utils.const.SELL], orderbooks, acc, 'BTC')
+    let a2 = new Arbitrage(markets, [utils.const.SELL, utils.const.SELL, utils.const.BUY], orderbooks, acc, 'BTC')
+    // let a4 = new Arbitrage(markets, [utils.const.SELL, utils.const.BUY, utils.const.SELL], orderbooks, acc, 'BTC') // correct one covered in tests above
+    let a3 = new Arbitrage(markets, [utils.const.SELL, utils.const.BUY, utils.const.BUY], orderbooks, acc, 'BTC')
+    let a4 = new Arbitrage(markets, [utils.const.BUY, utils.const.SELL, utils.const.SELL], orderbooks, acc, 'BTC')
+    let a5 = new Arbitrage(markets, [utils.const.BUY, utils.const.SELL, utils.const.BUY], orderbooks, acc, 'BTC')
+    let a6 = new Arbitrage(markets, [utils.const.BUY, utils.const.BUY, utils.const.SELL], orderbooks, acc, 'BTC')
+    let a7 = new Arbitrage(markets, [utils.const.BUY, utils.const.BUY, utils.const.BUY], orderbooks, acc, 'BTC')
+
+
+
+    expect(a1.getDeals()).to.be.null
+    expect(a2.getDeals()).to.be.null
+    expect(a3.getDeals()).to.be.null
+    expect(a4.getDeals()).to.be.null
+    expect(a5.getDeals()).to.be.null
+    expect(a6.getDeals()).to.be.null
+    expect(a7.getDeals()).to.be.null
+
+  })
 })

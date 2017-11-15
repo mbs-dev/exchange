@@ -31,9 +31,11 @@ class Arbitrage {
 
     var arbitrageAccount
     var deals
-    var k  = 0
+    var totalIterations = 0
 
     while (shouldOptimizeVolumes) {
+      totalIterations++
+      if (totalIterations > 100) throw new Error('Unable to rebalance arbitrage.')
       arbitrageAccount = this.availableFundsAccount.copy()
       deals = []
 
@@ -49,7 +51,7 @@ class Arbitrage {
         let whatCurrencyIspend = this.whatCurrencyISpend(market.buyOrSell(direction, availablePrice, availableVolume))
         let fundsIhaveForSpend = arbitrageAccount.getBalance()[whatCurrencyIspend] || Decimal(0)
 
-        var requiredVolume;
+        var requiredVolume
         if (whatCurrencyIspend === market.marketCurrency) {
           requiredVolume = fundsIhaveForSpend  // I must spend everything I have
         } else if (whatCurrencyIspend === market.secondCurrency) {
@@ -65,7 +67,6 @@ class Arbitrage {
         if (requiredVolume.lessThan('0.00000001')) {
           incorrectArbitrage = true
           shouldOptimizeVolumes = false
-          console.log('incorrect');
           break
         }
 
