@@ -51,7 +51,9 @@ debug('Arbitrage')(`Launching arbitrage across ${marketsOfInterestTriples.length
 const GOAL_CURRENCY = 'BTC'
 
 var account = new MulticurrencyAccount()
-account.updateBalance({GOAL_CURRENCY: Decimal(1.0)})
+initialDeposit = {}
+initialDeposit[GOAL_CURRENCY] = Decimal(1.0)
+account.updateBalance(initialDeposit)
 
 
 var q = new Queue(1, Infinity)
@@ -63,7 +65,17 @@ for (var i = 0; i < marketsOfInterestTriples.length; i++) {
       debug('Arbitrage')(`Received actual orderbooks for markets ${markets}`)
 
       let arbitrages = Arbitrage.getAllArbitrages(markets, orderbooks, account, GOAL_CURRENCY)
+
       console.log(`${markets[0].name} ${markets[1].name} ${markets[2].name} ${orderbooks[0]['BID'][0]['RATE']} ${orderbooks[0]['BID'][0]['QUANTITY']} ${orderbooks[0]['ASK'][0]['RATE']} ${orderbooks[0]['ASK'][0]['QUANTITY']} ${orderbooks[1]['BID'][0]['RATE']} ${orderbooks[1]['BID'][0]['QUANTITY']} ${orderbooks[1]['ASK'][0]['RATE']} ${orderbooks[1]['ASK'][0]['QUANTITY']} ${orderbooks[2]['BID'][0]['RATE']} ${orderbooks[2]['BID'][0]['QUANTITY']} ${orderbooks[2]['ASK'][0]['RATE']} ${orderbooks[2]['ASK'][0]['QUANTITY']}`)
+
+      // console.log(arbitrages);
+
+      // for (var i = 0; i < arbitrages.length; i++) {
+      //   console.log(i);
+      //   console.log(arbitrages[i].getDeals())
+      // }
+      // process.exit(1)
+
       let arbitragesOfInterest = _.reduce(arbitrages, (acc, arbitrage, index) => {
         let dealsObject = arbitrage.getDeals()
         if (dealsObject === null) return acc
