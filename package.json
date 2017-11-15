@@ -27,6 +27,7 @@
     "morgan": "^1.8.2",
     "node-bittrex-api": "^0.7.7",
     "pg": "^7.3.0",
+    "promise-queue": "^2.2.3",
     "pug": "^2.0.0-rc.3",
     "request": "^2.81.0",
     "serve-favicon": "^2.4.3",

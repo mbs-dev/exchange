@@ -1,5 +1,7 @@
+const debug = require('debug');
 const utils = require('../utils')
 const Decimal = require('decimal.js')
+const combinatorics = require('js-combinatorics');
 const _ = require('lodash')
 
 class Arbitrage {
@@ -23,8 +25,6 @@ class Arbitrage {
   }
 
   getDeals() {
-    let incorrectArbitrage = false
-
     let shouldOptimizeVolumes = true
     // let multiplicators = _.map(Array(this.markets.length), () => { return Decimal(1.0) })
     let multiplicator = Decimal(1.0)
@@ -35,22 +35,26 @@ class Arbitrage {
 
     while (shouldOptimizeVolumes) {
       totalIterations++
-      if (totalIterations > 100) throw new Error('Unable to rebalance arbitrage.')
+      if (totalIterations > 4) {
+        //throw new Error('Unable to rebalance arbitrage.')
+        return null
+      }
       arbitrageAccount = this.availableFundsAccount.copy()
       deals = []
 
       for (var j = 0; j < this.markets.length; j++) {
         let direction = this.buyOrSells[j]
-        let orderBookColumn = this.directionToOrder(direction) // inversed buy or sell, because we need counteroffer
+        let orderBookColumn = Arbitrage.directionToOrder(direction) // inversed buy or sell, because we need counteroffer
         let market = this.markets[j]
 
         // volume available at exchange, we use [0], since we want TOP of the order book
         let availableVolume = this.orderbooks[j][orderBookColumn][0][utils.const.VOLUME]  // decimal containing the quantity of currency pairs for the deal available on exchange
         let availablePrice =  this.orderbooks[j][orderBookColumn][0][utils.const.PRICE]   // decimal containing price for the deal available on exchange
 
-        let whatCurrencyIspend = this.whatCurrencyISpend(market.buyOrSell(direction, availablePrice, availableVolume))
+        let whatCurrencyIspend = Arbitrage.whatCurrencyISpend(market.buyOrSell(direction, availablePrice, availableVolume))
         let fundsIhaveForSpend = arbitrageAccount.getBalance()[whatCurrencyIspend] || Decimal(0)
 
+        debug('Volumes')(`I spend ${whatCurrencyIspend} and I have ${fundsIhaveForSpend} of the ${whatCurrencyIspend}`);
         var requiredVolume
         if (whatCurrencyIspend === market.marketCurrency) {
           requiredVolume = fundsIhaveForSpend  // I must spend everything I have
@@ -65,19 +69,20 @@ class Arbitrage {
         }
 
         if (requiredVolume.lessThan('0.00000001')) {
-          incorrectArbitrage = true
-          shouldOptimizeVolumes = false
-          break
+          return null
         }
 
         if (requiredVolume.greaterThan(availableVolume)) {
+          debug('Volumes')(`The required volume is ${requiredVolume.toString()} but available is only ${availableVolume.toString()}`)
+          debug('Volumes')(`Adjusting multiplicator from ${multiplicator.toString()}`)
           multiplicator = multiplicator.mul(availableVolume.dividedBy(requiredVolume))
+          debug('Volumes')(`to ${multiplicator.toString()}`)
           shouldOptimizeVolumes = true
           break
         }
 
         let diff = market.buyOrSell(direction, availablePrice, requiredVolume)
-        let whatISpend = this.whatCurrencyISpend(diff)
+        let whatISpend = Arbitrage.whatCurrencyISpend(diff)
 
         // then I store the new deal into `deals` buffer of this arbitrage
         deals.push([market.name, direction, requiredVolume, availablePrice])
@@ -86,31 +91,41 @@ class Arbitrage {
         shouldOptimizeVolumes = false
       }
     }
-    if (incorrectArbitrage) return null
 
-    let profit = Decimal(arbitrageAccount.getBalance()[this.profitCurrency]).sub(Decimal(this.availableFundsAccount.getBalance()[this.profitCurrency]))
+    let profit = Decimal(arbitrageAccount.getBalance()[this.profitCurrency]).sub(this.availableFundsAccount.getBalance()[this.profitCurrency])
     return [deals, arbitrageAccount, profit]
   }
 
-  whatCurrencyISpend(diff) {
+  static whatCurrencyISpend(diff) {
     for (var k in diff) {
       if (Decimal(diff[k]).isNegative()) return k
     }
     throw new Error('Provided diff that have no spendings. May be it is malformed deal?')
   }
 
-  whatCurrencyIGet(diff) {
-    for (var k in diff) {
-      if (diff[k].isPositive()) return k
-    }
-    throw new Error('Provided diff that have no incomes. May be it is malformed deal?')
+  static getAllArbitrages(markets, orderbooks, availableFundsAccount, profitCurrency) {
+    const buySell = combinatorics.baseN([utils.const.BUY, utils.const.SELL], markets.length).toArray()
+    var _markets = markets
+    var _orderbooks = orderbooks
+    var _availableFundsAccount = availableFundsAccount
+    var _profitCurrency = profitCurrency
+    return _.map(buySell, (buyOrSell) => {
+      return new Arbitrage(_markets, buyOrSell, _orderbooks, _availableFundsAccount.copy(), _profitCurrency)
+    })
   }
 
-
-  directionToOrder(d) {
+  static directionToOrder(d) {
     if (d === utils.const.BUY) return utils.const.ASK // you can `buy` from ASK
     if (d === utils.const.SELL) return utils.const.BID // you can `sell` to BID
     throw new Error('Direction of the deal should be either BUY or SELL and will respond with corresponding side of OrderBook')
+  }
+
+  toString() {
+    let result = ''
+    for (var i = 0; i < this.markets.length; i++) {
+      result = result + ` "${this.buyOrSells[i]}" on ${this.markets[i].name}`
+    }
+    return result
   }
 
 }

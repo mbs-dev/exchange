@@ -173,4 +173,69 @@ describe('Arbitrage', () => {
     expect(a7.getDeals()).to.be.null
 
   })
+
+  it('should generate possible arbitrage directions', () => {
+    let BittrexFee = (depositAmount) => { return Decimal.mul(depositAmount, 0.0025) }
+
+    let USDTBTCMarket = new MarketWithFees('USDT', 'BTC', 'USDT-BTC', BittrexFee)
+    let USDTETHMarket = new MarketWithFees('USDT', 'ETH', 'USDT-ETH', BittrexFee)
+    let BTCETHMarket = new MarketWithFees( 'BTC', 'ETH', 'BTC-ETH',  BittrexFee)
+
+    let orderbookUSDTBTC = {}
+    orderbookUSDTBTC[utils.const.BID] = [{'QUANTITY': Decimal('0.02392795'), 'RATE': Decimal('6580.74972297')},]
+    orderbookUSDTBTC[utils.const.ASK] = [{'QUANTITY': Decimal('0.24747803'), 'RATE': Decimal('6580.74972298')},]
+
+    let orderbookUSDTETH = {}
+    orderbookUSDTETH[utils.const.BID] = [{'QUANTITY': Decimal('0.63784758'), 'RATE': Decimal('320.06864764')},]
+    orderbookUSDTETH[utils.const.ASK] = [{'QUANTITY': Decimal('6.52426731'), 'RATE': Decimal('320.07000000')},]
+
+    let orderbookBTCETH = {}
+    orderbookBTCETH[utils.const.BID] = [{'QUANTITY': Decimal('3.58733748'), 'RATE': Decimal('0.04890000')},]
+    orderbookBTCETH[utils.const.ASK] = [{'QUANTITY': Decimal('3.39358303'), 'RATE': Decimal('0.04899999')},]
+
+    let orderbooks = [orderbookUSDTBTC, orderbookUSDTETH, orderbookBTCETH]
+
+    let funds = new MulticurrencyAccount()
+    funds.updateBalance({'BTC': Decimal(1.0)})
+
+    let arbitrages = Arbitrage.getAllArbitrages([USDTBTCMarket, USDTETHMarket, BTCETHMarket], orderbooks, funds, 'BTC')
+    arbitrages.should.be.an('array').that.have.lengthOf(8)
+
+    console.log(_.map(arbitrages, (item) => { return item.toString() }))
+  })
+
+  it('should spend everything', () => {
+    let BittrexFee = (depositAmount) => { return Decimal.mul(depositAmount, 0.0025) }
+
+    let USDTBTCMarket = new MarketWithFees('USDT', 'BTC', 'USDT-BTC', BittrexFee)
+    let USDTETHMarket = new MarketWithFees('USDT', 'ETH', 'USDT-ETH', BittrexFee)
+    let BTCETHMarket = new MarketWithFees( 'BTC', 'ETH', 'BTC-ETH',  BittrexFee)
+
+    let markets = [USDTBTCMarket, USDTETHMarket, BTCETHMarket]
+
+    let orderbookUSDTBTC = {}
+    orderbookUSDTBTC[utils.const.BID] = [{'QUANTITY': Decimal('1'), 'RATE': Decimal('1000')},]
+    orderbookUSDTBTC[utils.const.ASK] = [{'QUANTITY': Decimal('1'), 'RATE': Decimal('1100')},]
+
+    let orderbookUSDTETH = {}
+    orderbookUSDTETH[utils.const.BID] = [{'QUANTITY': Decimal('1'), 'RATE': Decimal('100')},]
+    orderbookUSDTETH[utils.const.ASK] = [{'QUANTITY': Decimal('1'), 'RATE': Decimal('110')},]
+
+    let orderbookBTCETH = {}
+    orderbookBTCETH[utils.const.BID] = [{'QUANTITY': Decimal('1'), 'RATE': Decimal('0.1')},]
+    orderbookBTCETH[utils.const.ASK] = [{'QUANTITY': Decimal('1'), 'RATE': Decimal('0.11')},]
+
+    let orderbooks = [orderbookUSDTBTC, orderbookUSDTETH, orderbookBTCETH]
+
+    let funds = new MulticurrencyAccount()
+    funds.updateBalance({'BTC': Decimal(1.0)})
+
+    let arbitrages = Arbitrage.getAllArbitrages([USDTBTCMarket, USDTETHMarket, BTCETHMarket], orderbooks, funds, 'BTC')
+    arbitrages.should.be.an('array').that.have.lengthOf(8)
+
+    let a = new Arbitrage(markets, [utils.const.SELL, utils.const.BUY, utils.const.SELL], orderbooks, funds, 'BTC')
+
+    let arbitrageAccount = a.getDeals()[1]
+    console.log(formatutils.beautyBalanceOutputOfAccount(arbitrageAccount).toString())
+  })
 })

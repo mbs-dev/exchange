@@ -58,7 +58,7 @@ class Market {
   }
 
   toString() {
-    return `[Market object: ${this.secondCurrency}/${this.marketCurrency} ]`
+    return `${this.name}` //`, base currency ${this.secondCurrency}, market currency ${this.marketCurrency}`
   }
 }
 
