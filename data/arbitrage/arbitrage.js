@@ -64,13 +64,10 @@ class Arbitrage {
           throw new Error(`I spend strange currency ${whatCurrencyIspend}`)
         }
 
-        if (j == 0) {
-          requiredVolume = multiplicator.mul(requiredVolume)
-        }
+        if (j == 0) requiredVolume = multiplicator.mul(requiredVolume)
 
-        if (requiredVolume.lessThan('0.00000001')) {
-          return null
-        }
+        if (requiredVolume.lessThan('0.00000001')) return null
+        if (whatCurrencyIspend === 'BTC' && requiredVolume.lessThan('0.00050000')) return null
 
         if (requiredVolume.greaterThan(availableVolume)) {
           debug('Volumes')(`The required volume is ${requiredVolume.toString()} but available is only ${availableVolume.toString()}`)

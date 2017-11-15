@@ -3,13 +3,18 @@ const Table = require('cli-table')
 const _ = require('lodash')
 
 
+const BOLD_TABLE = { 'top': '═' , 'top-mid': '╤' , 'top-left': '╔' , 'top-right': '╗'
+     , 'bottom': '═' , 'bottom-mid': '╧' , 'bottom-left': '╚' , 'bottom-right': '╝'
+     , 'left': '║' , 'left-mid': '╟' , 'mid': '─' , 'mid-mid': '┼'
+     , 'right': '║' , 'right-mid': '╢' , 'middle': '│' }
+
+
+
 function logDiff(diff) {
   var a = new ar.MulticurrencyAccount()
   a.updateBalance(diff)
   console.log(beautyBalanceOutputOfAccount(a).toString())
 }
-
-
 
 function beautyBalanceOutputOfAccount(account) {
   var balance = account.getBalance()
@@ -18,10 +23,7 @@ function beautyBalanceOutputOfAccount(account) {
   tableHeader.unshift('#'.bold.white)
   var table = new Table({
     'head': tableHeader,
-    chars: { 'top': '═' , 'top-mid': '╤' , 'top-left': '╔' , 'top-right': '╗'
-         , 'bottom': '═' , 'bottom-mid': '╧' , 'bottom-left': '╚' , 'bottom-right': '╝'
-         , 'left': '║' , 'left-mid': '╟' , 'mid': '─' , 'mid-mid': '┼'
-         , 'right': '║' , 'right-mid': '╢' , 'middle': '│' }
+    chars: BOLD_TABLE
   })
   var transactions = account.getTransactions()
   _.forEach(transactions, (transaction, index) => {

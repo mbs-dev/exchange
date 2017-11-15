@@ -3,12 +3,20 @@ const colors = require('colors')
 const _ = require('lodash')
 const Queue = require('promise-queue')
 
-const Decimal = require('decimal.js');
+const Decimal = require('decimal.js')
+
+const bittrex = require('node-bittrex-api')
+bittrex.options({
+  'apikey' : require('../secret.config.js').Bittrex.key,
+  'apisecret' : require('../secret.config.js').Bittrex.secret
+})
 
 const getmarkets = require('../data/exchanges/bittrex/getmarkets')
 const MarketWithFees = require('../data/arbitrage/').MarketWithFees
 const MulticurrencyAccount = require('../data/arbitrage/account')
 const getOrderBook = require('../data/exchanges/bittrex').getOrderBook
+const BittrexOrdersProcessing = require('../data/exchanges/bittrex').DealsExecutor
+
 const Arbitrage = require('../data/arbitrage/arbitrage')
 
 const formatutils = require('../data/formatutils');
@@ -45,14 +53,20 @@ const marketsOfInterestTriples = _.reduce(altcoins, (triples, altcoin) => {
 }, [])
 
 
+
+
+
 debug('Arbitrage')(`Launching arbitrage across ${marketsOfInterestTriples.length} altcoins markets.`)
 
 
 const GOAL_CURRENCY = 'BTC'
+const GOAL_AVAILABLE_FUNDS = Decimal('0.05')
+const MIN_PROFIT_THRESHOLD = Decimal('0.000005')
+
 
 var account = new MulticurrencyAccount()
 initialDeposit = {}
-initialDeposit[GOAL_CURRENCY] = Decimal(1.0)
+initialDeposit[GOAL_CURRENCY] = GOAL_AVAILABLE_FUNDS
 account.updateBalance(initialDeposit)
 
 
@@ -66,15 +80,8 @@ for (var i = 0; i < marketsOfInterestTriples.length; i++) {
 
       let arbitrages = Arbitrage.getAllArbitrages(markets, orderbooks, account, GOAL_CURRENCY)
 
+      // market state
       console.log(`${markets[0].name} ${markets[1].name} ${markets[2].name} ${orderbooks[0]['BID'][0]['RATE']} ${orderbooks[0]['BID'][0]['QUANTITY']} ${orderbooks[0]['ASK'][0]['RATE']} ${orderbooks[0]['ASK'][0]['QUANTITY']} ${orderbooks[1]['BID'][0]['RATE']} ${orderbooks[1]['BID'][0]['QUANTITY']} ${orderbooks[1]['ASK'][0]['RATE']} ${orderbooks[1]['ASK'][0]['QUANTITY']} ${orderbooks[2]['BID'][0]['RATE']} ${orderbooks[2]['BID'][0]['QUANTITY']} ${orderbooks[2]['ASK'][0]['RATE']} ${orderbooks[2]['ASK'][0]['QUANTITY']}`)
-
-      // console.log(arbitrages);
-
-      // for (var i = 0; i < arbitrages.length; i++) {
-      //   console.log(i);
-      //   console.log(arbitrages[i].getDeals())
-      // }
-      // process.exit(1)
 
       let arbitragesOfInterest = _.reduce(arbitrages, (acc, arbitrage, index) => {
         let dealsObject = arbitrage.getDeals()
@@ -83,29 +90,35 @@ for (var i = 0; i < marketsOfInterestTriples.length; i++) {
         let account = dealsObject[1]
         let profit = dealsObject[2]
 
-        console.log(formatutils.beautyBalanceOutputOfAccount(account).toString() )
+        debug('Arbitrage')(formatutils.beautyBalanceOutputOfAccount(account).toString() )
+        debug('Arbitrage')(`Calculated profit: ${profit.toFixed(8).toString()} ${GOAL_CURRENCY}`)
 
-        if (profit.greaterThan(Decimal(0))) {
+        if (profit.greaterThan(Decimal(MIN_PROFIT_THRESHOLD))) {
+          debug('Arbitrage')('Found profitable arbitrage!')
           acc.push(arbitrage)
         }
         return acc
       }, [])
 
-      if (arbitragesOfInterest.length > 0) {
-        debug('Arbitrage')('Found profitable arbitrage!')
-        _.each(arbitragesOfInterest, (arbitrage) => {
-          let dealsObject = arbitrage.getDeals()
-          if (dealsObject === null) return acc
+      // if (arbitragesOfInterest.length > 0) {
+      // }
+      return arbitragesOfInterest
+    }).then((arbitragesOfInterest) => {
+      if (arbitragesOfInterest.length == 0) return
+      debug('Arbitrage')('Processing profitable arbitrages')
 
-          let deals = dealsObject[0]
-          let account = dealsObject[1]
-          let profit = dealsObject[2]
+      let deals = arbitragesOfInterest[0].getDeals()[0]
+      let processing = new BittrexOrdersProcessing(bittrex, deals)
 
-          console.log(arbitrage);
-          console.log(`Profit: ${profit} ${GOAL_CURRENCY} `);
+      processing.execute()
 
-        })
-      }
+      return new Promise(function(resolve, reject) {
+        setInterval(()=>{
+          if (processing.q.getQueueLength() === 0) {
+            resolve()
+          }
+        }, 1000)
+      })
     }).catch((err) => {
       console.log(err)
       debug('Arbitrage')(`${err} error for markets ${markets}`)

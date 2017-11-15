@@ -3,6 +3,9 @@
 const request = require('request')
 const _ = require('lodash')
 const Decimal = require('decimal.js')
+const Queue = require('promise-queue')
+
+const Bittrex = require('node-bittrex-api')
 
 let utils = require('../utils.js')
 
@@ -45,4 +48,83 @@ function getOrderBook(marketName) {
   })
 }
 
+function tradeSell(bittrex, marketName, price, volume) {
+  return new Promise(function(resolve, reject) {
+    bittrex.tradesell({
+      MarketName: marketName,
+      OrderType: 'LIMIT',
+      Quantity: Decimal(volume).toFixed(8).toString(),
+      Rate: Decimal(price).toFixed(8).toString(),
+      TimeInEffect: 'IMMEDIATE_OR_CANCEL', // supported options are 'IMMEDIATE_OR_CANCEL', 'GOOD_TIL_CANCELLED', 'FILL_OR_KILL'
+      ConditionType: 'NONE', // supported options are 'NONE', 'GREATER_THAN', 'LESS_THAN'
+      Target: 0, // used in conjunction with ConditionType
+    }, function( data, err ) {
+      if (err) {
+        reject(err.message)
+        return
+      } else {
+        resolve(data)
+      }
+    })
+  })
+}
+
+
+
+
+function tradeBuy(bittrex, marketName, price, volume) {
+  return new Promise(function(resolve, reject) {
+    bittrex.tradebuy({
+      MarketName: marketName,
+      OrderType: 'LIMIT',
+      Quantity: Decimal(volume).toFixed(8).toString(),
+      Rate: Decimal(price).toFixed(8).toString(),
+      TimeInEffect: 'IMMEDIATE_OR_CANCEL', // supported options are 'IMMEDIATE_OR_CANCEL', 'GOOD_TIL_CANCELLED', 'FILL_OR_KILL'
+      ConditionType: 'NONE', // supported options are 'NONE', 'GREATER_THAN', 'LESS_THAN'
+      Target: 0, // used in conjunction with ConditionType
+    }, function( data, err ) {
+      if (err) {
+        reject(err.message)
+        return
+      } else {
+        resolve(data)
+      }
+    })
+  })
+}
+
+class DealsExecutor {
+  constructor(bittrex, deals) {
+    this.bittrex = bittrex
+    this.deals = deals
+    this.q = new Queue(1, Infinity)  // no concurrency, run promises sequentially
+    this.orders = []
+  }
+
+  execute() {
+    for (var i = 0; i < this.deals.length; i++) {
+      let deal = this.deals[i]
+      let marketName = deal[0]
+      let direction = deal[1]
+      let requiredVolume = deal[2]
+      let price = deal[3]
+      //[market.name, direction, requiredVolume, availablePrice]
+      if (direction === utils.const.BUY) {
+        this.q.add(() => {
+          return tradeBuy(marketName, price, requiredVolume).catch((err) => {
+            console.error(err)
+          })
+        })
+      } else if (direction === utils.const.SELL) {
+        this.q.add(() => {
+          return tradeBuy(marketName, price, requiredVolume).catch((err) => {
+            console.error(err)
+          })
+        })
+      }
+    }
+  }
+}
+
+module.exports.DealsExecutor = DealsExecutor
 module.exports.getOrderBook = getOrderBook
