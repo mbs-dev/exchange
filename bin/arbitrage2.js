@@ -119,16 +119,17 @@ for (var i = 0; i < marketsOfInterestTriples.length; i++) {
 
       processing.execute()
 
-      return new Promise(function(resolve, reject) {
-        setInterval(()=>{
-          if (processing.q.getQueueLength() === 0) {
-            resolve()
-          }
-        }, 1000)
-      })
     }).catch((err) => {
       console.log(err)
       debug('Arbitrage')(`${err} error for markets ${markets}`)
     })
   })
+
+
 }
+
+setInterval(()=>{
+  if (processing.q.getQueueLength() === 0) {
+    process.exit(0)
+  }
+}, 5000)
