@@ -129,7 +129,7 @@ for (var i = 0; i < marketsOfInterestTriples.length; i++) {
 }
 
 setInterval(()=>{
-  if (processing.q.getQueueLength() === 0) {
+  if (q.getQueueLength() === 0) {
     process.exit(0)
   }
 }, 5000)
