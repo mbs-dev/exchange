@@ -42,21 +42,28 @@ const altcoins = _.reduce(marketNameToMarket, (alts, market, marketName) => {
   return alts
 }, [])
 
+var uniqueTriples = []
+
 // we require altcoins that have market as in BTC as in ETH, so we can do BTC->alt, alt->ETH, BTC->ETH arbitrage
 const marketsOfInterestTriples = _.reduce(altcoins, (triples, altcoin) => {
   var btcMarket = marketNameToMarket['BTC-' + altcoin] || marketNameToMarket[altcoin + '-BTC']
   var ethMarket = marketNameToMarket['ETH-' + altcoin] || marketNameToMarket[altcoin + '-ETH']
   if (btcMarket !== undefined && ethMarket !== undefined) {
-    triples.push([btcMarket, ethMarket, marketNameToMarket['BTC-ETH']])
+
+    let tripleStr = [btcMarket.name, ethMarket.name, marketNameToMarket['BTC-ETH'].name].join(' ')
+    if (uniqueTriples.indexOf(tripleStr) < 0) {
+      triples.push([btcMarket, ethMarket, marketNameToMarket['BTC-ETH']])
+      uniqueTriples.push(tripleStr)
+    }
   }
   return triples
 }, [])
 
 
-
-
-
 debug('Arbitrage')(`Launching arbitrage across ${marketsOfInterestTriples.length} altcoins markets.`)
+for (var i = 0; i < marketsOfInterestTriples.length; i++) {
+  console.log(marketsOfInterestTriples[i][0].name, marketsOfInterestTriples[i][1].name, marketsOfInterestTriples[i][2].name)
+}
 
 
 const GOAL_CURRENCY = 'BTC'
