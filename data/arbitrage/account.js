@@ -52,6 +52,13 @@ class MulticurrencyAccount {
     })
     return balance
   }
+
+  isEmpty() {
+    let balance = this.getBalance()
+    for (var k in balance)
+      if (Decimal(balance[k]).greaterThan(Decimal(0))) return false
+    return true
+  }
 }
 
 module.exports = MulticurrencyAccount
