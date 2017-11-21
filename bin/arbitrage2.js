@@ -59,7 +59,14 @@ var uniqueTriples = []
 //   return triples
 // }, [])
 
-const marketsOfInterestTriples = [[marketNameToMarket['USDT-BTC'], marketNameToMarket['USDT-ETH'], marketNameToMarket['BTC-ETH']]]
+const marketsOfInterestTriples = [
+  [marketNameToMarket['USDT-BTC'], marketNameToMarket['USDT-ETH'], marketNameToMarket['BTC-ETH']],
+  [marketNameToMarket['USDT-BTC'], marketNameToMarket['USDT-ETC'], marketNameToMarket['BTC-ETC']],
+  [marketNameToMarket['USDT-BTC'], marketNameToMarket['USDT-LTC'], marketNameToMarket['BTC-LTC']],
+  [marketNameToMarket['USDT-BTC'], marketNameToMarket['USDT-BCC'], marketNameToMarket['BTC-BCC']],
+  [marketNameToMarket['USDT-BTC'], marketNameToMarket['USDT-XMR'], marketNameToMarket['BTC-XMR']],
+  [marketNameToMarket['USDT-BTC'], marketNameToMarket['USDT-XRP'], marketNameToMarket['BTC-XRP']],
+]
 
 
 debug('Arbitrage')(`Launching arbitrage across ${marketsOfInterestTriples.length} altcoins markets.`)
