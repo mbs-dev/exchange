@@ -1,8 +1,6 @@
-const debug = require('debug')
-const colors = require('colors')
 const _ = require('lodash')
+const debug = require('debug')
 const Queue = require('promise-queue')
-
 const Decimal = require('decimal.js')
 
 const bittrex = require('node-bittrex-api')
@@ -10,14 +8,15 @@ bittrex.options({
   'apikey' : require('../secret.config.js').Bittrex.key,
   'apisecret' : require('../secret.config.js').Bittrex.secret
 })
-
 const getmarkets = require('../data/exchanges/bittrex/getmarkets')
-const MarketWithFees = require('../data/arbitrage/').MarketWithFees
-const MulticurrencyAccount = require('../data/arbitrage/account')
 const getOrderBook = require('../data/exchanges/bittrex').getOrderBook
 const BittrexOrdersProcessing = require('../data/exchanges/bittrex').DealsExecutor
 
-const Arbitrage = require('../data/arbitrage/arbitrage')
+const arbitrage = require('../data/arbitrage/index')
+const MarketWithFees = arbitrage.MarketWithFees
+const MulticurrencyAccount = arbitrage.MulticurrencyAccount
+
+const Arbitrage = arbitrage.Arbitrage
 
 const formatutils = require('../data/formatutils');
 
@@ -116,8 +115,6 @@ for (var i = 0; i < marketsOfInterestTriples.length; i++) {
         return acc
       }, [])
 
-      // if (arbitragesOfInterest.length > 0) {
-      // }
       return arbitragesOfInterest
     }).then((arbitragesOfInterest) => {
       if (arbitragesOfInterest.length == 0) return
