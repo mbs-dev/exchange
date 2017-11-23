@@ -93,7 +93,7 @@ for (var i = 0; i < marketsOfInterestTriples.length; i++) {
     return Promise.all(_.map(markets, (market) => { return getOrderBook(market.name) })).then((orderbooks) => {
       debug('Arbitrage')(`Received actual orderbooks for markets ${markets}`)
 
-      let arbitrages = Arbitrage.getAllArbitrages(markets, orderbooks, account, GOAL_CURRENCY)
+      let arbitrages = Arbitrage.getAllArbitrages(markets, orderbooks, account, GOAL_CURRENCY, 3)
 
       // market state
       console.log(`${markets[0].name} ${markets[1].name} ${markets[2].name} ${orderbooks[0]['BID'][0]['RATE']} ${orderbooks[0]['BID'][0]['QUANTITY']} ${orderbooks[0]['ASK'][0]['RATE']} ${orderbooks[0]['ASK'][0]['QUANTITY']} ${orderbooks[1]['BID'][0]['RATE']} ${orderbooks[1]['BID'][0]['QUANTITY']} ${orderbooks[1]['ASK'][0]['RATE']} ${orderbooks[1]['ASK'][0]['QUANTITY']} ${orderbooks[2]['BID'][0]['RATE']} ${orderbooks[2]['BID'][0]['QUANTITY']} ${orderbooks[2]['ASK'][0]['RATE']} ${orderbooks[2]['ASK'][0]['QUANTITY']}`)

@@ -12,7 +12,7 @@ class Arbitrage {
   * @param {MulticurrencyAccount} availableFundsAccount
   * @param {String} profitCurrency
   */
-  constructor(markets, buyOrSells, orderbooks, availableFundsAccount, profitCurrency) {
+  constructor(markets, buyOrSells, orderbooks, availableFundsAccount, profitCurrency, depths) {
     this.markets = markets
     this.buyOrSells = buyOrSells
     this.orderbooks = orderbooks
@@ -22,6 +22,12 @@ class Arbitrage {
     if (markets.length === 0) throw new Error('Incorrect markets dimensions')
     if (!(markets.length === buyOrSells.length && buyOrSells.length === orderbooks.length)) throw new Error('Improper dimensions for markets, buyOrSells or orderbooks.')
     if (!availableFundsAccount || availableFundsAccount.isEmpty()) throw new Error('Account of available funds should be not empty.')
+
+    if (!depths) {
+      this.depths = _.map(Array(orderbooks.length), () => { return 0 })
+    } else {
+      this.depths = depths
+    }
   }
 
   getDeals() {
@@ -47,8 +53,7 @@ class Arbitrage {
         let orderBookColumn = Arbitrage.directionToOrder(direction) // inversed buy or sell, because we need counteroffer
         let market = this.markets[j]
 
-        // we use [0], since we want TOP of the order book
-        let orderBookItem = this.orderbooks[j][orderBookColumn][0]
+        let orderBookItem = this.orderbooks[j][orderBookColumn][this.depths[j]]
         let availableVolume = orderBookItem[utils.const.VOLUME]  // decimal containing the quantity of currency pairs for the deal available on exchange
         let availablePrice =  orderBookItem[utils.const.PRICE]   // decimal containing price for the deal available on exchange
 
@@ -101,14 +106,18 @@ class Arbitrage {
     throw new Error('Provided diff that have no spendings. May be it is malformed deal?')
   }
 
-  static getAllArbitrages(markets, orderbooks, availableFundsAccount, profitCurrency) {
+  static getAllArbitrages(markets, orderbooks, availableFundsAccount, profitCurrency, maxDepth) {
     const buySell = combinatorics.baseN([utils.const.BUY, utils.const.SELL], markets.length).toArray()
     var _markets = markets
     var _orderbooks = orderbooks
     var _availableFundsAccount = availableFundsAccount
     var _profitCurrency = profitCurrency
-    return _.map(buySell, (buyOrSell) => {
-      return new Arbitrage(_markets, buyOrSell, _orderbooks, _availableFundsAccount.copy(), _profitCurrency)
+    var _maxDepth = maxDepth
+
+    return _.flatMap(buySell, (buyOrSell) => {
+      return _.map(combinatorics.baseN(_.map(new Array(_maxDepth), (v,k)=>{return k}), _markets.length).toArray(), (depths) => {
+        return new Arbitrage(_markets, buyOrSell, _orderbooks, _availableFundsAccount.copy(), _profitCurrency, depths)
+      })
     })
   }
 
