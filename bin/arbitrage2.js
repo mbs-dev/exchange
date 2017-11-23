@@ -44,28 +44,28 @@ const altcoins = _.reduce(marketNameToMarket, (alts, market, marketName) => {
 var uniqueTriples = []
 
 // we require altcoins that have market as in BTC as in ETH, so we can do BTC->alt, alt->ETH, BTC->ETH arbitrage
-// const marketsOfInterestTriples = _.reduce(altcoins, (triples, altcoin) => {
-//   var btcMarket = marketNameToMarket['BTC-' + altcoin] || marketNameToMarket[altcoin + '-BTC']
-//   var ethMarket = marketNameToMarket['ETH-' + altcoin] || marketNameToMarket[altcoin + '-ETH']
-//   if (btcMarket !== undefined && ethMarket !== undefined) {
-//
-//     let tripleStr = [btcMarket.name, ethMarket.name, marketNameToMarket['BTC-ETH'].name].join(' ')
-//     if (uniqueTriples.indexOf(tripleStr) < 0) {
-//       triples.push([btcMarket, ethMarket, marketNameToMarket['BTC-ETH']])
-//       uniqueTriples.push(tripleStr)
-//     }
-//   }
-//   return triples
-// }, [])
+const marketsOfInterestTriples = _.reduce(altcoins, (triples, altcoin) => {
+  var btcMarket = marketNameToMarket['BTC-' + altcoin] || marketNameToMarket[altcoin + '-BTC']
+  var ethMarket = marketNameToMarket['ETH-' + altcoin] || marketNameToMarket[altcoin + '-ETH']
+  if (btcMarket !== undefined && ethMarket !== undefined) {
 
-const marketsOfInterestTriples = [
-  [marketNameToMarket['USDT-BTC'], marketNameToMarket['USDT-ETH'], marketNameToMarket['BTC-ETH']],
-  [marketNameToMarket['USDT-BTC'], marketNameToMarket['USDT-ETC'], marketNameToMarket['BTC-ETC']],
-  [marketNameToMarket['USDT-BTC'], marketNameToMarket['USDT-LTC'], marketNameToMarket['BTC-LTC']],
-  [marketNameToMarket['USDT-BTC'], marketNameToMarket['USDT-BCC'], marketNameToMarket['BTC-BCC']],
-  [marketNameToMarket['USDT-BTC'], marketNameToMarket['USDT-XMR'], marketNameToMarket['BTC-XMR']],
-  [marketNameToMarket['USDT-BTC'], marketNameToMarket['USDT-XRP'], marketNameToMarket['BTC-XRP']],
-]
+    let tripleStr = [btcMarket.name, ethMarket.name, marketNameToMarket['BTC-ETH'].name].join(' ')
+    if (uniqueTriples.indexOf(tripleStr) < 0) {
+      triples.push([btcMarket, ethMarket, marketNameToMarket['BTC-ETH']])
+      uniqueTriples.push(tripleStr)
+    }
+  }
+  return triples
+}, [])
+
+// const marketsOfInterestTriples = [
+//   [marketNameToMarket['USDT-BTC'], marketNameToMarket['USDT-ETH'], marketNameToMarket['BTC-ETH']],
+//   [marketNameToMarket['USDT-BTC'], marketNameToMarket['USDT-ETC'], marketNameToMarket['BTC-ETC']],
+//   [marketNameToMarket['USDT-BTC'], marketNameToMarket['USDT-LTC'], marketNameToMarket['BTC-LTC']],
+//   [marketNameToMarket['USDT-BTC'], marketNameToMarket['USDT-BCC'], marketNameToMarket['BTC-BCC']],
+//   [marketNameToMarket['USDT-BTC'], marketNameToMarket['USDT-XMR'], marketNameToMarket['BTC-XMR']],
+//   [marketNameToMarket['USDT-BTC'], marketNameToMarket['USDT-XRP'], marketNameToMarket['BTC-XRP']],
+// ]
 
 
 debug('Arbitrage')(`Launching arbitrage across ${marketsOfInterestTriples.length} altcoins markets.`)
