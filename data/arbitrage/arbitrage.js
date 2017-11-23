@@ -47,9 +47,10 @@ class Arbitrage {
         let orderBookColumn = Arbitrage.directionToOrder(direction) // inversed buy or sell, because we need counteroffer
         let market = this.markets[j]
 
-        // volume available at exchange, we use [0], since we want TOP of the order book
-        let availableVolume = this.orderbooks[j][orderBookColumn][0][utils.const.VOLUME]  // decimal containing the quantity of currency pairs for the deal available on exchange
-        let availablePrice =  this.orderbooks[j][orderBookColumn][0][utils.const.PRICE]   // decimal containing price for the deal available on exchange
+        // we use [0], since we want TOP of the order book
+        let orderBookItem = this.orderbooks[j][orderBookColumn][0]
+        let availableVolume = orderBookItem[utils.const.VOLUME]  // decimal containing the quantity of currency pairs for the deal available on exchange
+        let availablePrice =  orderBookItem[utils.const.PRICE]   // decimal containing price for the deal available on exchange
 
         let whatCurrencyIspend = Arbitrage.whatCurrencyISpend(market.buyOrSell(direction, availablePrice, availableVolume))
         let fundsIhaveForSpend = arbitrageAccount.getBalance()[whatCurrencyIspend] || Decimal(0)
