@@ -76,7 +76,7 @@ for (var i = 0; i < marketsOfInterestTriples.length; i++) {
 
 const GOAL_CURRENCY = 'BTC'
 const GOAL_AVAILABLE_FUNDS = Decimal('0.05')
-const MIN_PROFIT_THRESHOLD = Decimal('0.000005')
+const MIN_PROFIT_THRESHOLD = Decimal('0')
 
 
 var account = new MulticurrencyAccount()
