@@ -78,7 +78,7 @@ for (var i = 0; i < marketsOfInterestTriples.length; i++) {
 
 const GOAL_CURRENCY = 'BTC'
 const GOAL_AVAILABLE_FUNDS = Decimal('0.05')
-const MIN_PROFIT_THRESHOLD = Decimal('0')
+const MIN_PROFIT_THRESHOLD = Decimal('0.00000100')
 
 
 var account = new MulticurrencyAccount()
@@ -113,18 +113,20 @@ for (var i = 0; i < marketsOfInterestTriples.length; i++) {
         let deals = dealsObject[0] // [market.name, direction, requiredVolume, availablePrice]
 
         if (Decimal(account.getBalance()[GOAL_CURRENCY]).greaterThan(Decimal(GOAL_AVAILABLE_FUNDS))) {
-          debug('Arbitrage')('Found profitable arbitrage!')
+          if (Decimal(profit).greaterThan(MIN_PROFIT_THRESHOLD)) {
+            debug('Arbitrage')('Found profitable arbitrage!')
 
-          debug('Arbitrage')('* Arbitrage serie explanation *')  // TODO: add explain() method to arbitrages
-          for (var i = 0; i < deals.length; i++) {
-            var step = deals[i]
-            debug('Arbitrage')(`I do "${step[1]}" on market "${step[0]}" with quantity "${step[2]}" and price "${step[3]}"`)
+            debug('Arbitrage')('* Arbitrage serie explanation *')  // TODO: add explain() method to arbitrages
+            for (var i = 0; i < deals.length; i++) {
+              var step = deals[i]
+              debug('Arbitrage')(`I do "${step[1]}" on market "${step[0]}" with quantity "${step[2]}" and price "${step[3]}"`)
+            }
+
+            debug('Arbitrage')(formatutils.beautyBalanceOutputOfAccount(account).toString() )
+            debug('Arbitrage')(`Calculated profit: ${profit.toFixed(8).toString()} ${GOAL_CURRENCY}`)
+
+            acc.push(arbitrage)
           }
-
-          debug('Arbitrage')(formatutils.beautyBalanceOutputOfAccount(account).toString() )
-          debug('Arbitrage')(`Calculated profit: ${profit.toFixed(8).toString()} ${GOAL_CURRENCY}`)
-
-          acc.push(arbitrage)
         }
         return acc
       }, [])
