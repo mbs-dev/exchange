@@ -12,6 +12,7 @@ let utils = require('../utils.js')
 let ascendingOrder = (x, y) => { return Decimal(x[utils.const.PRICE]).sub(Decimal(y[utils.const.PRICE])) }
 let descendingOrder = (x, y) => { return Decimal(y[utils.const.PRICE]).sub(Decimal(x[utils.const.PRICE])) }
 
+const debug = require('debug')('Bittrex')
 
 function getOrderBook(marketName) {
   const url = 'https://bittrex.com/api/v1.1/public/getorderbook?market=' + marketName + '&type=both'
@@ -111,13 +112,13 @@ class DealsExecutor {
       if (direction === utils.const.BUY) {
         this.q.add(() => {
           return tradeBuy(marketName, price, requiredVolume).catch((err) => {
-            console.error(err)
+            debug(err)
           })
         })
       } else if (direction === utils.const.SELL) {
         this.q.add(() => {
           return tradeBuy(marketName, price, requiredVolume).catch((err) => {
-            console.error(err)
+            debug(err)
           })
         })
       }
