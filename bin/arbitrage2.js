@@ -21,6 +21,8 @@ const Arbitrage = arbitrage.Arbitrage
 const formatutils = require('../data/formatutils');
 
 
+
+
 // Bittrex Fee is 0.25 % , not 2.5% (see https://bittrex.com/Fees)
 let BittrexFee = (depositAmount) => { return Decimal.mul(depositAmount, 0.0025) }
 
@@ -87,6 +89,9 @@ account.updateBalance(initialDeposit)
 
 var q = new Queue(1, Infinity)
 
+
+let ordersProcessing = new BittrexOrdersProcessing(bittrex, q)
+
 for (var i = 0; i < marketsOfInterestTriples.length; i++) {
   const markets = marketsOfInterestTriples[i]
   q.add(()=>{
@@ -96,9 +101,9 @@ for (var i = 0; i < marketsOfInterestTriples.length; i++) {
       let arbitrages = Arbitrage.getAllArbitrages(markets, orderbooks, account, GOAL_CURRENCY, 3)
 
       // market state
-      console.log(`${markets[0].name} ${markets[1].name} ${markets[2].name} ${orderbooks[0]['BID'][0]['RATE']} ${orderbooks[0]['BID'][0]['QUANTITY']} ${orderbooks[0]['ASK'][0]['RATE']} ${orderbooks[0]['ASK'][0]['QUANTITY']} ${orderbooks[1]['BID'][0]['RATE']} ${orderbooks[1]['BID'][0]['QUANTITY']} ${orderbooks[1]['ASK'][0]['RATE']} ${orderbooks[1]['ASK'][0]['QUANTITY']} ${orderbooks[2]['BID'][0]['RATE']} ${orderbooks[2]['BID'][0]['QUANTITY']} ${orderbooks[2]['ASK'][0]['RATE']} ${orderbooks[2]['ASK'][0]['QUANTITY']}`)
+      debug('Arbitrage')(`${markets[0].name} ${markets[1].name} ${markets[2].name} ${orderbooks[0]['BID'][0]['RATE']} ${orderbooks[0]['BID'][0]['QUANTITY']} ${orderbooks[0]['ASK'][0]['RATE']} ${orderbooks[0]['ASK'][0]['QUANTITY']} ${orderbooks[1]['BID'][0]['RATE']} ${orderbooks[1]['BID'][0]['QUANTITY']} ${orderbooks[1]['ASK'][0]['RATE']} ${orderbooks[1]['ASK'][0]['QUANTITY']} ${orderbooks[2]['BID'][0]['RATE']} ${orderbooks[2]['BID'][0]['QUANTITY']} ${orderbooks[2]['ASK'][0]['RATE']} ${orderbooks[2]['ASK'][0]['QUANTITY']}`)
 
-      let arbitragesOfInterest = _.reduce(arbitrages, (acc, arbitrage, index) => {
+      return _.reduce(arbitrages, (acc, arbitrage, index) => {
         let dealsObject = arbitrage.getDeals()
         if (dealsObject === null) return acc
 
@@ -110,7 +115,7 @@ for (var i = 0; i < marketsOfInterestTriples.length; i++) {
         if (profit.greaterThan(Decimal(MIN_PROFIT_THRESHOLD))) {
           debug('Arbitrage')('Found profitable arbitrage!')
 
-          debug('Arbitrage')('* Arbitrage serie explanation *')
+          debug('Arbitrage')('* Arbitrage serie explanation *')  // TODO: add explain() method to arbitrages
           for (var i = 0; i < deals.length; i++) {
             var step = deals[i]
             debug('Arbitrage')(`I do "${step[1]}" on market "${step[0]}" with quantity "${step[2]}" and price "${step[3]}"`)
@@ -123,16 +128,13 @@ for (var i = 0; i < marketsOfInterestTriples.length; i++) {
         }
         return acc
       }, [])
-
-      return arbitragesOfInterest
     }).then((arbitragesOfInterest) => {
       if (arbitragesOfInterest.length == 0) return
       debug('Arbitrage')('Processing profitable arbitrages')
 
       let deals = arbitragesOfInterest[0].getDeals()[0]
-      let processing = new BittrexOrdersProcessing(bittrex, deals)
 
-      processing.execute()
+      ordersProcessing.execute(deals)
 
     }).catch((err) => {
       console.log(err)

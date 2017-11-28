@@ -94,16 +94,15 @@ function tradeBuy(bittrex, marketName, price, volume) {
 }
 
 class DealsExecutor {
-  constructor(bittrex, deals) {
+  constructor(bittrex, q) {
     this.bittrex = bittrex
-    this.deals = deals
-    this.q = new Queue(1, Infinity)  // no concurrency, run promises sequentially
+    this.q = q || new Queue(1, Infinity)  // no concurrency, run promises sequentially
     this.orders = []
   }
 
-  execute() {
-    for (var i = 0; i < this.deals.length; i++) {
-      let deal = this.deals[i]
+  execute(deals) {
+    for (var i = 0; i < deals.length; i++) {
+      let deal = deals[i]
       let marketName = deal[0]
       let direction = deal[1]
       let requiredVolume = deal[2]
