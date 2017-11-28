@@ -112,7 +112,7 @@ for (var i = 0; i < marketsOfInterestTriples.length; i++) {
 
         let deals = dealsObject[0] // [market.name, direction, requiredVolume, availablePrice]
 
-        if (profit.greaterThan(Decimal(MIN_PROFIT_THRESHOLD))) {
+        if (Decimal(account.getBalance()[GOAL_CURRENCY]).greaterThan(Decimal(GOAL_AVAILABLE_FUNDS))) {
           debug('Arbitrage')('Found profitable arbitrage!')
 
           debug('Arbitrage')('* Arbitrage serie explanation *')  // TODO: add explain() method to arbitrages
