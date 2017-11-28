@@ -103,6 +103,7 @@ class DealsExecutor {
 
   execute(deals) {
     var q = this.q
+    var bittrex = this.bittrex
 
     for (var i = 0; i < deals.length; i++) {
       let deal = deals[i]
@@ -113,13 +114,13 @@ class DealsExecutor {
       //[market.name, direction, requiredVolume, availablePrice]
       if (direction === utils.const.BUY) {
         q.add(() => {
-          return tradeBuy(marketName, price, requiredVolume).catch((err) => {
+          return tradeBuy(bittrex, marketName, price, requiredVolume).catch((err) => {
             debug(err)
           })
         })
       } else if (direction === utils.const.SELL) {
         q.add(() => {
-          return tradeBuy(marketName, price, requiredVolume).catch((err) => {
+          return tradeBuy(bittrex, marketName, price, requiredVolume).catch((err) => {
             debug(err)
           })
         })
