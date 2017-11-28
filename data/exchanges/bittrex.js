@@ -102,6 +102,8 @@ class DealsExecutor {
   }
 
   execute(deals) {
+    var q = this.q
+
     for (var i = 0; i < deals.length; i++) {
       let deal = deals[i]
       let marketName = deal[0]
@@ -110,19 +112,28 @@ class DealsExecutor {
       let price = deal[3]
       //[market.name, direction, requiredVolume, availablePrice]
       if (direction === utils.const.BUY) {
-        this.q.add(() => {
+        q.add(() => {
           return tradeBuy(marketName, price, requiredVolume).catch((err) => {
             debug(err)
           })
         })
       } else if (direction === utils.const.SELL) {
-        this.q.add(() => {
+        q.add(() => {
           return tradeBuy(marketName, price, requiredVolume).catch((err) => {
             debug(err)
           })
         })
       }
     }
+    return new Promise(function(resolve, reject) {
+      var i;
+      i = setInterval(() => {
+        if (q.getQueueLength() === 0) {
+          clearInterval(i)
+          resolve()
+        }
+      }, 1000)
+    });
   }
 }
 

@@ -87,10 +87,10 @@ initialDeposit[GOAL_CURRENCY] = GOAL_AVAILABLE_FUNDS
 account.updateBalance(initialDeposit)
 
 
-var q = new Queue(1, Infinity)
+var q = new Queue(5, Infinity)
 
 
-let ordersProcessing = new BittrexOrdersProcessing(bittrex, q)
+let ordersProcessing = new BittrexOrdersProcessing(bittrex)
 
 for (var i = 0; i < marketsOfInterestTriples.length; i++) {
   const markets = marketsOfInterestTriples[i]
@@ -134,8 +134,7 @@ for (var i = 0; i < marketsOfInterestTriples.length; i++) {
 
       let deals = arbitragesOfInterest[0].getDeals()[0]
 
-      ordersProcessing.execute(deals)
-
+      return ordersProcessing.execute(deals)
     }).catch((err) => {
       console.log(err)
       debug('Arbitrage')(`${err} error for markets ${markets}`)
