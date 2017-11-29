@@ -51,6 +51,7 @@ function getOrderBook(marketName) {
 
 function tradeSell(bittrex, marketName, price, volume) {
   return new Promise(function(resolve, reject) {
+    debug(`Before trade SELL vol ${volume} at rate ${price} on ${marketName} `)
     bittrex.tradesell({
       MarketName: marketName,
       OrderType: 'LIMIT',
@@ -59,11 +60,13 @@ function tradeSell(bittrex, marketName, price, volume) {
       TimeInEffect: 'IMMEDIATE_OR_CANCEL', // supported options are 'IMMEDIATE_OR_CANCEL', 'GOOD_TIL_CANCELLED', 'FILL_OR_KILL'
       ConditionType: 'NONE', // supported options are 'NONE', 'GREATER_THAN', 'LESS_THAN'
       Target: 0, // used in conjunction with ConditionType
-    }, function( data, err ) {
+    }, function(data, err) {
+      debug(`After trade SELL vol ${volume} at rate ${price} on ${marketName} `)
       if (err) {
+        debug(`Error has occured ${err} ${err.message}`)
         reject(err.message)
-        return
       } else {
+        debug(`Well done.`)
         resolve(data)
       }
     })
@@ -75,6 +78,7 @@ function tradeSell(bittrex, marketName, price, volume) {
 
 function tradeBuy(bittrex, marketName, price, volume) {
   return new Promise(function(resolve, reject) {
+    debug(`Before trade BUY vol ${volume} at rate ${price} on ${marketName} `)
     bittrex.tradebuy({
       MarketName: marketName,
       OrderType: 'LIMIT',
@@ -83,11 +87,13 @@ function tradeBuy(bittrex, marketName, price, volume) {
       TimeInEffect: 'IMMEDIATE_OR_CANCEL', // supported options are 'IMMEDIATE_OR_CANCEL', 'GOOD_TIL_CANCELLED', 'FILL_OR_KILL'
       ConditionType: 'NONE', // supported options are 'NONE', 'GREATER_THAN', 'LESS_THAN'
       Target: 0, // used in conjunction with ConditionType
-    }, function( data, err ) {
+    }, function(data, err) {
+      debug(`After trade BUY vol ${volume} at rate ${price} on ${marketName} `)
       if (err) {
+        debug(`Error has occured ${err} ${err.message}`)
         reject(err.message)
-        return
       } else {
+        debug(`Well done.`)
         resolve(data)
       }
     })
@@ -120,7 +126,7 @@ class DealsExecutor {
         })
       } else if (direction === utils.const.SELL) {
         q.add(() => {
-          return tradeBuy(bittrex, marketName, price, requiredVolume).catch((err) => {
+          return tradeSell(bittrex, marketName, price, requiredVolume).catch((err) => {
             debug(err)
           })
         })
